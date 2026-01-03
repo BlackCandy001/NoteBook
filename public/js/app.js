@@ -27,7 +27,12 @@ class NotebookApp {
     // Kiểm tra xác thực
     checkAuthentication() {
         const savedPassword = localStorage.getItem('notebook-password');
-        const isAuthenticated = localStorage.getItem('notebook-authenticated');
+        // Clean up old local storage auth if exists so users get prompted again
+        if (localStorage.getItem('notebook-authenticated')) {
+            localStorage.removeItem('notebook-authenticated');
+        }
+
+        const isAuthenticated = sessionStorage.getItem('notebook-authenticated');
 
         // Nếu chưa có mật khẩu, tạo mật khẩu mặc định
         if (!savedPassword) {
@@ -126,7 +131,7 @@ class NotebookApp {
 
         if (password === savedPassword) {
             this.isAuthenticated = true;
-            localStorage.setItem('notebook-authenticated', 'true');
+            sessionStorage.setItem('notebook-authenticated', 'true');
             this.showMainApp();
             this.loadNotes();
             this.setupEventListeners();
