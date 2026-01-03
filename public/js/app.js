@@ -12,7 +12,7 @@ class NotebookApp {
     init() {
         // Kiểm tra xem người dùng đã đăng nhập chưa
         this.checkAuthentication();
-        
+
         if (this.isAuthenticated) {
             this.loadNotes();
             this.setupEventListeners();
@@ -28,12 +28,12 @@ class NotebookApp {
     checkAuthentication() {
         const savedPassword = localStorage.getItem('notebook-password');
         const isAuthenticated = localStorage.getItem('notebook-authenticated');
-        
+
         // Nếu chưa có mật khẩu, tạo mật khẩu mặc định
         if (!savedPassword) {
             localStorage.setItem('notebook-password', this.defaultPassword);
         }
-        
+
         // Nếu đã đăng nhập trước đó (trong phiên này)
         if (isAuthenticated === 'true') {
             this.isAuthenticated = true;
@@ -46,13 +46,13 @@ class NotebookApp {
         document.getElementById('password-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.verifyPassword();
         });
-        
+
         // Sự kiện tạo mã ngẫu nhiên
         document.getElementById('generate-password').addEventListener('click', () => this.generateRandomPassword());
-        
+
         // Sự kiện sao chép mã
         document.getElementById('copy-password').addEventListener('click', () => this.copyGeneratedPassword());
-        
+
         // Focus vào ô nhập mật khẩu
         setTimeout(() => {
             document.getElementById('password-input').focus();
@@ -63,17 +63,17 @@ class NotebookApp {
     generateRandomPassword() {
         // Tạo mã 6 số ngẫu nhiên
         const randomPassword = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         // Hiển thị mã mới
         document.getElementById('new-password-display').textContent = randomPassword;
         document.getElementById('generated-password').style.display = 'flex';
-        
+
         // Tự động điền vào ô nhập
         document.getElementById('password-input').value = randomPassword;
-        
+
         // Lưu mã mới vào localStorage
         localStorage.setItem('notebook-password', randomPassword);
-        
+
         // Hiển thị thông báo
         this.showTempMessage('Mã mới đã được tạo và lưu!', 'success');
     }
@@ -106,9 +106,9 @@ class NotebookApp {
             box-shadow: var(--box-shadow);
             animation: slideIn 0.3s ease;
         `;
-        
+
         document.body.appendChild(messageElement);
-        
+
         setTimeout(() => {
             messageElement.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => {
@@ -123,7 +123,7 @@ class NotebookApp {
         const password = input.value.trim();
         const savedPassword = localStorage.getItem('notebook-password') || this.defaultPassword;
         const errorElement = document.getElementById('password-error');
-        
+
         if (password === savedPassword) {
             this.isAuthenticated = true;
             localStorage.setItem('notebook-authenticated', 'true');
@@ -138,7 +138,7 @@ class NotebookApp {
             input.style.borderColor = 'var(--danger-color)';
             input.value = '';
             input.focus();
-            
+
             // Hiệu ứng rung
             input.style.animation = 'shake 0.5s';
             setTimeout(() => {
@@ -151,11 +151,11 @@ class NotebookApp {
     showMainApp() {
         document.getElementById('password-modal').classList.remove('active');
         document.getElementById('main-container').style.display = 'flex';
-        
+
         // Thêm hiệu ứng fade in
         document.getElementById('main-container').style.opacity = '0';
         document.getElementById('main-container').style.transition = 'opacity 0.5s ease';
-        
+
         setTimeout(() => {
             document.getElementById('main-container').style.opacity = '1';
         }, 10);
@@ -164,7 +164,7 @@ class NotebookApp {
     // Đổi mật khẩu (chức năng nâng cao)
     changePassword(oldPassword, newPassword) {
         const savedPassword = localStorage.getItem('notebook-password') || this.defaultPassword;
-        
+
         if (oldPassword === savedPassword) {
             localStorage.setItem('notebook-password', newPassword);
             return true;
@@ -189,52 +189,91 @@ class NotebookApp {
         }
     }
 
-    // Tải ghi chú từ localStorage và giải mã
-    loadNotes() {
-        const savedNotes = localStorage.getItem('notebook-notes');
-        if (savedNotes) {
-            const parsedNotes = JSON.parse(savedNotes);
-            // Giải mã nội dung của mỗi ghi chú
-            this.notes = parsedNotes.map(note => ({
-                ...note,
-                content: this.decryptContent(note.content),
-                title: this.decryptContent(note.title)
-            }));
-        } else {
-            // Tạo dữ liệu mẫu nếu chưa có
-            this.notes = [
-                {
-                    id: this.generateId(),
-                    title: "Chào mừng đến với Notebook!",
-                    content: "<p>Đây là ghi chú đầu tiên của bạn. Bạn có thể:</p><ul><li>Chỉnh sửa tiêu đề và nội dung</li><li>Lưu ghi chú bằng nút <strong>Lưu</strong></li><li>Tạo ghi chú mới bằng nút <strong>Tạo mới</strong></li><li>Tìm kiếm ghi chú ở thanh bên trái</li></ul><p>Chúc bạn có trải nghiệm tốt với ứng dụng!</p>",
-                    tags: ["hướng dẫn", "mới"],
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                },
-                {
-                    id: this.generateId(),
-                    title: "Danh sách việc cần làm",
-                    content: "<h3>Công việc tuần này:</h3><ul><li><input type='checkbox'> Hoàn thành dự án notebook</li><li><input type='checkbox'> Viết tài liệu hướng dẫn</li><li><input type='checkbox'> Kiểm thử ứng dụng</li><li><input type='checkbox'> Deploy lên server</li></ul>",
-                    tags: ["công việc", "quan trọng"],
-                    createdAt: new Date(Date.now() - 86400000).toISOString(),
-                    updatedAt: new Date().toISOString()
-                }
-            ];
-            this.saveNotes();
+    // Tải ghi chú từ Server
+    async loadNotes() {
+        try {
+            const response = await fetch('/api/notes');
+            if (!response.ok) throw new Error('Không thể tải ghi chú');
+
+            const remoteNotes = await response.json();
+
+            if (remoteNotes && remoteNotes.length > 0) {
+                // Giải mã nội dung của mỗi ghi chú
+                this.notes = remoteNotes.map(note => ({
+                    ...note,
+                    content: this.decryptContent(note.content),
+                    title: this.decryptContent(note.title)
+                }));
+            } else {
+                this.notes = [];
+                // Có thể thêm ghi chú mặc định nếu muốn, nhưng cần save lên server ngay
+                // Hiện tại để trống để tránh spam server mỗi khi f5
+            }
+
+            // Cập nhật UI sau khi tải xong
+            this.updateUI();
+
+            // Chọn note đầu tiên nếu có
+            if (this.notes.length > 0 && !this.currentNoteId) {
+                this.selectNote(this.notes[0].id);
+            }
+
+        } catch (error) {
+            console.error('Lỗi tải ghi chú:', error);
+            this.showTempMessage('Lỗi kết nối server', 'error');
+            this.notes = [];
+            this.updateUI();
         }
     }
 
-    // Lưu ghi chú vào localStorage với mã hóa
-    saveNotes() {
-        // Mã hóa nội dung trước khi lưu
-        const notesToSave = this.notes.map(note => ({
-            ...note,
-            content: this.encryptContent(note.content),
-            title: this.encryptContent(note.title)
-        }));
-        
-        localStorage.setItem('notebook-notes', JSON.stringify(notesToSave));
-        this.updateStats();
+    // Lưu một ghi chú lên Server
+    async saveNoteToServer(note) {
+        try {
+            // Mã hóa trước khi gửi
+            const noteToSave = {
+                ...note,
+                content: this.encryptContent(note.content),
+                title: this.encryptContent(note.title)
+            };
+
+            const response = await fetch('/api/notes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(noteToSave)
+            });
+
+            if (!response.ok) throw new Error('Failed to save');
+
+            const result = await response.json();
+            if (result.success) {
+                // this.showTempMessage('Đã lưu thành công', 'success');
+                this.updateStats();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error saving note:', error);
+            this.showTempMessage('Lỗi lưu ghi chú', 'error');
+            return false;
+        }
+    }
+
+    // Xóa ghi chú trên Server
+    async deleteNoteFromServer(id) {
+        try {
+            const response = await fetch(`/api/notes/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Failed to delete');
+            return true;
+        } catch (error) {
+            console.error('Error deleting note:', error);
+            this.showTempMessage('Lỗi xóa ghi chú', 'error');
+            return false;
+        }
     }
 
     // Tạo ID ngẫu nhiên
@@ -246,31 +285,31 @@ class NotebookApp {
     setupEventListeners() {
         // Nút tạo ghi chú mới
         document.getElementById('new-note-btn').addEventListener('click', () => this.createNewNote());
-        
+
         // Nút lưu ghi chú
         document.getElementById('save-note-btn').addEventListener('click', () => this.saveCurrentNote());
-        
+
         // Nút xóa ghi chú
         document.getElementById('delete-note-btn').addEventListener('click', () => this.deleteCurrentNote());
-        
+
         // Nút xuất ghi chú
         document.getElementById('export-note-btn').addEventListener('click', () => this.exportCurrentNote());
-        
+
         // Tìm kiếm ghi chú
         document.getElementById('search-notes').addEventListener('input', (e) => this.filterNotes(e.target.value));
-        
+
         // Thay đổi tiêu đề
         document.getElementById('note-title-input').addEventListener('input', () => this.enableSaveButton());
-        
+
         // Thay đổi nội dung editor
         document.getElementById('note-editor').addEventListener('input', () => {
             this.enableSaveButton();
             this.updateCharCount();
         });
-        
+
         // Toggle theme
         document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
-        
+
         // Các nút trên thanh công cụ
         document.querySelectorAll('.toolbar-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -278,23 +317,23 @@ class NotebookApp {
                 this.execEditorCommand(command);
             });
         });
-        
+
         // Thêm thẻ
         document.getElementById('add-tag-btn').addEventListener('click', () => this.addTagToCurrentNote());
         document.getElementById('tag-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addTagToCurrentNote();
         });
-        
+
         // Modal
         document.getElementById('help-btn').addEventListener('click', () => this.showHelpModal());
         document.querySelector('.close-modal').addEventListener('click', () => this.hideHelpModal());
         document.getElementById('help-modal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) this.hideHelpModal();
         });
-        
+
         // Xuất tất cả
         document.getElementById('export-all-btn').addEventListener('click', () => this.exportAllNotes());
-        
+
         // Import (demo)
         document.getElementById('import-btn').addEventListener('click', () => this.showImportDemo());
     }
@@ -304,7 +343,7 @@ class NotebookApp {
         this.renderNotesList();
         this.updateStats();
         this.updateThemeIcon();
-        
+
         // Hiển thị ghi chú đầu tiên nếu có
         if (this.notes.length > 0 && !this.currentNoteId) {
             this.selectNote(this.notes[0].id);
@@ -314,12 +353,12 @@ class NotebookApp {
     // Hiển thị danh sách ghi chú
     renderNotesList(filter = '') {
         const notesList = document.getElementById('notes-list');
-        const filteredNotes = this.notes.filter(note => 
+        const filteredNotes = this.notes.filter(note =>
             note.title.toLowerCase().includes(filter.toLowerCase()) ||
             note.content.toLowerCase().includes(filter.toLowerCase()) ||
             note.tags.some(tag => tag.toLowerCase().includes(filter.toLowerCase()))
         );
-        
+
         if (filteredNotes.length === 0) {
             notesList.innerHTML = `
                 <div class="empty-notes">
@@ -330,7 +369,7 @@ class NotebookApp {
             `;
             return;
         }
-        
+
         notesList.innerHTML = filteredNotes.map(note => `
             <div class="note-item ${this.currentNoteId === note.id ? 'active' : ''}" data-id="${note.id}">
                 <div class="note-title">${this.escapeHtml(note.title) || 'Không có tiêu đề'}</div>
@@ -339,7 +378,7 @@ class NotebookApp {
                 ${note.tags.length > 0 ? `<div class="note-tags">${note.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
             </div>
         `).join('');
-        
+
         // Thêm sự kiện click cho từng ghi chú
         notesList.querySelectorAll('.note-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -353,28 +392,28 @@ class NotebookApp {
     selectNote(noteId) {
         this.currentNoteId = noteId;
         const note = this.notes.find(n => n.id === noteId);
-        
+
         if (note) {
             document.getElementById('note-title-input').value = note.title;
             document.getElementById('note-editor').innerHTML = note.content;
-            
+
             // Cập nhật tags
             this.updateTagsDisplay(note.tags);
-            
+
             // Cập nhật nút
             document.getElementById('save-note-btn').disabled = true;
             document.getElementById('delete-note-btn').disabled = false;
-            
+
             // Cập nhật thời gian lưu
             document.getElementById('last-saved').textContent = `Đã lưu: ${this.formatDate(note.updatedAt, true)}`;
         }
-        
+
         this.updateCharCount();
         this.renderNotesList(document.getElementById('search-notes').value);
     }
 
     // Tạo ghi chú mới
-    createNewNote() {
+    async createNewNote() {
         const newNote = {
             id: this.generateId(),
             title: "Ghi chú mới",
@@ -383,52 +422,57 @@ class NotebookApp {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        
+
         this.notes.unshift(newNote);
-        this.saveNotes();
+        await this.saveNoteToServer(newNote);
         this.selectNote(newNote.id);
-        
+
         // Focus vào tiêu đề
         document.getElementById('note-title-input').focus();
         document.getElementById('note-title-input').select();
     }
 
     // Lưu ghi chú hiện tại
-    saveCurrentNote() {
+    async saveCurrentNote() {
         if (!this.currentNoteId) return;
-        
+
         const noteIndex = this.notes.findIndex(n => n.id === this.currentNoteId);
         if (noteIndex === -1) return;
-        
+
         this.notes[noteIndex].title = document.getElementById('note-title-input').value;
         this.notes[noteIndex].content = document.getElementById('note-editor').innerHTML;
         this.notes[noteIndex].updatedAt = new Date().toISOString();
-        
-        this.saveNotes();
-        this.renderNotesList(document.getElementById('search-notes').value);
-        
-        // Cập nhật UI
-        document.getElementById('save-note-btn').disabled = true;
-        document.getElementById('last-saved').textContent = `Đã lưu: ${this.formatDate(new Date(), true)}`;
-        
-        // Hiệu ứng visual
-        const saveBtn = document.getElementById('save-note-btn');
-        saveBtn.innerHTML = '<i class="fas fa-check"></i> Đã lưu!';
-        setTimeout(() => {
-            saveBtn.innerHTML = '<i class="fas fa-save"></i> Lưu';
-        }, 1500);
+
+        const success = await this.saveNoteToServer(this.notes[noteIndex]);
+        if (success) {
+            this.renderNotesList(document.getElementById('search-notes').value);
+
+            // Cập nhật UI
+            document.getElementById('save-note-btn').disabled = true;
+            document.getElementById('last-saved').textContent = `Đã lưu: ${this.formatDate(new Date(), true)}`;
+
+            // Hiệu ứng visual
+            const saveBtn = document.getElementById('save-note-btn');
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> Đã lưu!';
+            setTimeout(() => {
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Lưu';
+            }, 1500);
+        }
     }
 
     // Xóa ghi chú hiện tại
-    deleteCurrentNote() {
+    async deleteCurrentNote() {
         if (!this.currentNoteId) return;
-        
+
         if (confirm('Bạn có chắc chắn muốn xóa ghi chú này không?')) {
             const noteIndex = this.notes.findIndex(n => n.id === this.currentNoteId);
             if (noteIndex !== -1) {
+                const noteId = this.notes[noteIndex].id;
+                await this.deleteNoteFromServer(noteId);
+
                 this.notes.splice(noteIndex, 1);
-                this.saveNotes();
-                
+                // this.saveNotes(); // No longer needed
+
                 // Chọn ghi chú khác nếu có
                 if (this.notes.length > 0) {
                     this.selectNote(this.notes[0].id);
@@ -442,7 +486,7 @@ class NotebookApp {
                     document.getElementById('last-saved').textContent = 'Chưa lưu';
                     this.updateTagsDisplay([]);
                 }
-                
+
                 this.renderNotesList(document.getElementById('search-notes').value);
             }
         }
@@ -470,7 +514,7 @@ class NotebookApp {
     // Cập nhật thống kê
     updateStats() {
         document.getElementById('total-notes').textContent = this.notes.length;
-        
+
         // Tính dung lượng lưu trữ (ước tính)
         const dataSize = JSON.stringify(this.notes).length;
         const sizeInKB = Math.round(dataSize / 1024 * 10) / 10;
@@ -480,30 +524,30 @@ class NotebookApp {
     // Định dạng ngày tháng
     formatDate(dateString, showTime = false) {
         const date = new Date(dateString);
-        const options = { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric' 
+        const options = {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
         };
-        
+
         if (showTime) {
             options.hour = '2-digit';
             options.minute = '2-digit';
         }
-        
+
         return date.toLocaleDateString('vi-VN', options);
     }
 
     // Thiết lập ngày hiện tại
     setCurrentDate() {
         const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            day: '2-digit', 
-            month: 'long', 
-            year: 'numeric' 
+        const options = {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
         };
-        document.getElementById('current-date').textContent = 
+        document.getElementById('current-date').textContent =
             now.toLocaleDateString('vi-VN', options);
     }
 
@@ -519,7 +563,7 @@ class NotebookApp {
     updateThemeIcon() {
         const themeToggle = document.getElementById('theme-toggle');
         const icon = themeToggle.querySelector('i');
-        
+
         if (this.isDarkTheme) {
             icon.className = 'fas fa-sun';
             themeToggle.title = 'Chuyển sang chế độ sáng';
@@ -536,18 +580,18 @@ class NotebookApp {
     }
 
     // Thêm thẻ vào ghi chú hiện tại
-    addTagToCurrentNote() {
+    async addTagToCurrentNote() {
         if (!this.currentNoteId) return;
-        
+
         const tagInput = document.getElementById('tag-input');
         const tag = tagInput.value.trim();
-        
+
         if (tag) {
             const noteIndex = this.notes.findIndex(n => n.id === this.currentNoteId);
             if (noteIndex !== -1) {
                 if (!this.notes[noteIndex].tags.includes(tag)) {
                     this.notes[noteIndex].tags.push(tag);
-                    this.saveNotes();
+                    await this.saveNoteToServer(this.notes[noteIndex]);
                     this.updateTagsDisplay(this.notes[noteIndex].tags);
                     this.enableSaveButton();
                 }
@@ -560,11 +604,11 @@ class NotebookApp {
     updateTagsDisplay(tags) {
         const tagsContainer = document.querySelector('.note-tags');
         if (!tagsContainer) return;
-        
+
         // Xóa các thẻ cũ
         const existingTags = tagsContainer.querySelectorAll('.tag');
         existingTags.forEach(tag => tag.remove());
-        
+
         // Thêm thẻ mới vào trước input
         const tagInput = document.getElementById('tag-input');
         tags.forEach(tag => {
@@ -575,7 +619,7 @@ class NotebookApp {
                 <span class="tag-remove" data-tag="${tag}">×</span>
             `;
             tagsContainer.insertBefore(tagElement, tagInput);
-            
+
             // Sự kiện xóa thẻ
             tagElement.querySelector('.tag-remove').addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -585,13 +629,13 @@ class NotebookApp {
     }
 
     // Xóa thẻ khỏi ghi chú hiện tại
-    removeTagFromCurrentNote(tagToRemove) {
+    async removeTagFromCurrentNote(tagToRemove) {
         if (!this.currentNoteId) return;
-        
+
         const noteIndex = this.notes.findIndex(n => n.id === this.currentNoteId);
         if (noteIndex !== -1) {
             this.notes[noteIndex].tags = this.notes[noteIndex].tags.filter(tag => tag !== tagToRemove);
-            this.saveNotes();
+            await this.saveNoteToServer(this.notes[noteIndex]);
             this.updateTagsDisplay(this.notes[noteIndex].tags);
             this.enableSaveButton();
         }
@@ -600,12 +644,12 @@ class NotebookApp {
     // Xuất ghi chú hiện tại
     exportCurrentNote() {
         if (!this.currentNoteId) return;
-        
+
         const note = this.notes.find(n => n.id === this.currentNoteId);
         if (!note) return;
-        
+
         const content = `Tiêu đề: ${note.title}\n\n${this.stripHtml(note.content)}\n\nThẻ: ${note.tags.join(', ')}\nNgày tạo: ${this.formatDate(note.createdAt, true)}\nNgày sửa: ${this.formatDate(note.updatedAt, true)}`;
-        
+
         this.downloadFile(`${note.title.replace(/[^a-z0-9]/gi, '_')}.txt`, content);
     }
 
@@ -613,7 +657,7 @@ class NotebookApp {
     exportAllNotes() {
         let content = `NOTEBOOK EXPORT - ${new Date().toLocaleDateString('vi-VN')}\n\n`;
         content += `Tổng số ghi chú: ${this.notes.length}\n\n`;
-        
+
         this.notes.forEach((note, index) => {
             content += `=== GHI CHÚ ${index + 1} ===\n`;
             content += `Tiêu đề: ${note.title}\n`;
@@ -622,7 +666,7 @@ class NotebookApp {
             content += `Ngày tạo: ${this.formatDate(note.createdAt, true)}\n`;
             content += `Ngày sửa: ${this.formatDate(note.updatedAt, true)}\n\n`;
         });
-        
+
         this.downloadFile(`notebook_export_${new Date().toISOString().slice(0, 10)}.txt`, content);
     }
 
@@ -674,14 +718,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
     }
-    
+
     // Khởi tạo app
     window.notebookApp = new NotebookApp();
-    
+
     // Thêm hiệu ứng khởi động
     document.body.style.opacity = '0';
     document.body.style.transition = 'opacity 0.5s ease';
-    
+
     setTimeout(() => {
         document.body.style.opacity = '1';
     }, 100);
