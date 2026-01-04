@@ -1,21 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Notebook</title>
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-    <h1>📓 Notebook</h1>
-    <input id="roomInput" placeholder="Room key" />
-    <button onclick="joinRoom()">Join</button>
+    <div class="app">
+      <!-- HEADER -->
+      <header class="header">
+        <h1>📓 Notebook</h1>
+        <div class="online">👥 Online: <span id="userCount">0</span></div>
+      </header>
 
-    <input id="titleInput" />
-    <textarea id="contentInput"></textarea>
-    <button onclick="addNote()">Add</button>
+      <!-- ROOM -->
+      <section class="room">
+        <input id="roomInput" placeholder="🔑 Nhập mật mã phòng" />
+        <button onclick="joinRoom()">Kết nối</button>
+      </section>
 
-    <ul id="list"></ul>
+      <!-- EDITOR -->
+      <section class="editor">
+        <input id="titleInput" placeholder="Tiêu đề ghi chú" />
+        <textarea id="contentInput" placeholder="Nội dung..."></textarea>
+        <button class="add-btn" onclick="addNote()">➕ Thêm ghi chú</button>
+      </section>
+
+      <!-- NOTES -->
+      <section class="notes">
+        <ul id="list"></ul>
+      </section>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="app.js"></script>
+    <!-- MOBILE BOTTOM BAR -->
+    <div class="bottom-bar">
+      <button onclick="joinRoom()">🔑</button>
+      <button onclick="addNote()">➕</button>
+      <button onclick="saveCurrent()">💾</button>
+      <button onclick="toggleDark()">🌙</button>
+    </div>
   </body>
 </html>

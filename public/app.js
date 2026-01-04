@@ -10,6 +10,7 @@ const clientId = Math.random().toString(36).slice(2);
 let roomKey = null;
 let notes = [];
 let currentId = null;
+let onlineUsers = [];
 
 /* =========================
    DOM
@@ -34,6 +35,19 @@ function joinRoom() {
 
   fetchNotes();
 }
+
+function getClientIP(socket) {
+  return socket.handshake.headers["x-forwarded-for"]?.split(",")[0]
+      || socket.handshake.address;
+}
+
+socket.on("room:count", count => {
+  console.log("👥 Users (theo IP):", count);
+  document.getElementById("userCount").innerText = count;
+});
+
+
+
 
 /* =========================
    API
@@ -172,6 +186,21 @@ async function removeNote(id) {
   }
 
   render();
+}
+
+/* =========================
+   DARK MODE TOGGLE
+========================= */
+function toggleDark() {
+  document.body.classList.toggle("dark");
+
+  const isDark = document.body.classList.contains("dark");
+  localStorage.setItem("darkMode", isDark ? "1" : "0");
+}
+
+/* Load saved mode */
+if (localStorage.getItem("darkMode") === "1") {
+  document.body.classList.add("dark");
 }
 
 /* =========================

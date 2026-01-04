@@ -1,4 +1,4 @@
-/* Reset cơ bản */
+/* RESET */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -8,84 +8,206 @@
 
 body {
   background: #f4f6f8;
-  color: #222;
-  padding: 30px;
+  padding: 16px;
 }
 
-/* Container */
-body > h1 {
-  text-align: center;
-  margin-bottom: 20px;
+/* APP WRAPPER */
+.app {
+  max-width: 900px;
+  margin: auto;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* Khung nhập */
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+}
+
+.online {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* ROOM */
+.room {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.room input {
+  flex: 1;
+}
+
+/* EDITOR */
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* INPUTS */
 input, textarea {
   width: 100%;
-  max-width: 600px;
-  display: block;
-  margin: 10px auto;
   padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
 }
 
 textarea {
-  min-height: 120px;
   resize: vertical;
+  min-height: 120px;
 }
 
-/* Nút */
+/* BUTTONS */
 button {
-  display: block;
-  margin: 10px auto 20px;
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: 10px 14px;
+  border-radius: 8px;
   border: none;
-  background: #2563eb;
-  color: #fff;
-  font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  background: #4f46e5;
+  color: white;
+  font-size: 0.9rem;
 }
 
 button:hover {
-  background: #1e40af;
+  background: #4338ca;
 }
 
-/* Danh sách note */
-ul {
+.add-btn {
+  background: #16a34a;
+}
+
+.add-btn:hover {
+  background: #15803d;
+}
+
+/* NOTES LIST */
+.notes ul {
   list-style: none;
-  max-width: 600px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* Từng note */
-li {
-  background: #fff;
+.note {
+  background: #f9fafb;
+  padding: 10px 12px;
   border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  align-items: center;
 }
 
-/* Nội dung note */
-li b {
-  display: block;
-  margin-bottom: 4px;
+.note strong {
+  font-size: 0.9rem;
 }
 
-/* Nút xoá */
-li button {
-  background: #ef4444;
-  margin: 0 0 0 10px;
-  padding: 6px 10px;
-  font-size: 12px;
+.note button {
+  background: transparent;
+  color: #555;
+  font-size: 1rem;
 }
 
-li button:hover {
-  background: #b91c1c;
+.note button:hover {
+  color: red;
+}
+
+/* RESPONSIVE (DESKTOP) */
+@media (min-width: 768px) {
+  .editor textarea {
+    min-height: 160px;
+  }
+}
+/* =========================
+   MOBILE BOTTOM BAR
+========================= */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 56px;
+  background: #ffffff;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -5px 15px rgba(0,0,0,0.08);
+  z-index: 100;
+}
+
+/* buttons */
+.bottom-bar button {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #4f46e5;
+}
+
+.bottom-bar button:active {
+  transform: scale(0.9);
+}
+
+/* tránh bị che nội dung */
+body {
+  padding-bottom: 70px;
+}
+
+/* ẨN TRÊN DESKTOP */
+@media (min-width: 768px) {
+  .bottom-bar {
+    display: none;
+  }
+}
+/* =========================
+   DARK MODE (MOBILE)
+========================= */
+body.dark {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.dark input,
+body.dark textarea {
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+}
+
+/* Bottom bar dark */
+body.dark .bottom-bar {
+  background: #020617;
+  border-top: 1px solid #1e293b;
+}
+
+body.dark .bottom-bar button {
+  color: #38bdf8;
+}
+
+/* Note list dark */
+body.dark li {
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid #1e293b;
+}
+body {
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.bottom-bar {
+  transition: background 0.25s ease;
 }
